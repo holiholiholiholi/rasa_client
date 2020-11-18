@@ -110,5 +110,6 @@ public class NLUDataTransfer {
     static class Intent {
         String intent;
         String examples;
+        String synonym;
     }
 }

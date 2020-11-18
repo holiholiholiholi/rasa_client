@@ -16,43 +16,64 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class RasaClientTest {
     public static void main(String[] args) throws IOException, InterruptedException {
 //        String testString = "Was passiert mit meinen Daten?";
 //        System.out.println(parse(testString));
-        File nluFile = new File("target/nlu.yml");
+//        String path = "target/nlu.yml";
+//        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.0.6/server/data/test_data.yml";
+//        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.0.6/server/data/training_data.yml";
+        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_de_default.yml";
+        File nluFile = new File(path);
         ObjectMapper mapper = NLUDataTransfer.getYamlMapper();
         NLUDataTransfer.NLUData2 nluData = mapper.readValue(nluFile, NLUDataTransfer.NLUData2.class);
-        System.out.println("read intents:" + nluData.nlu.size());
-        int sentenceNr = 0, correct = 0, good = 0;
-        double minConfidence = 1.0;
+        System.out.println("read intents:" + nluData.nlu.stream().filter(i -> i.intent != null).count());
+
         double threshold = 0.9;
+        List<EvalResult> results = new ArrayList<>();
         for (NLUDataTransfer.Intent intent : nluData.nlu) {
-            System.out.println("\n--------\nIntent: " + intent.intent);
+            if (StringUtils.isEmpty(intent.intent)) {
+                //not intent object
+                continue;
+            }
+//            System.out.println("\n--------\nIntent: " + intent.intent);
             List<String> sentences = readSentences(intent.examples);
 //            sentences.forEach(System.out::println);
             for (String sentence : sentences) {
-                sentenceNr++;
+                EvalResult evalResult = new EvalResult();
+                evalResult.text = sentence;
+                evalResult.intent = intent.intent;
+
                 NLUResult result = parse(sentence);
-                if (intent.intent.equalsIgnoreCase(result.intent)) {
-                    correct++;
-                    if (result.confidence >= threshold) {
-                        good++;
-                    }
-                    if(result.confidence< minConfidence){
-                        minConfidence = result.confidence;
-                    }
-                }
-                else{
-                    System.out.println("Error: "+sentence+"; "+result);
-                }
+                evalResult.result = result.intent;
+                evalResult.confidence = result.confidence;
+                evalResult.correct = intent.intent.equalsIgnoreCase(result.intent);
+                results.add(evalResult);
             }
         }
-        System.out.println("Parsed sentences: " + sentenceNr
-                + ", correct: " + correct + ", good (>=" + threshold + "):" + good);
-        System.out.println("lowest confidence: "+ minConfidence);
+        System.out.println("Parsed sentences: " + results.size()
+                + ", correct: " + results.stream().filter(EvalResult::isCorrect).count()
+                + ", good (>=" + threshold + "):"
+                + results.stream().filter(EvalResult::isCorrect).filter(r -> r.confidence >= threshold).count());
+        System.out.println("lowest confidence (all):"
+                + results.stream().mapToDouble(EvalResult::getConfidence).min().orElse(0));
+        System.out.printf("lowest confidence (correct): %s%n",
+                results.stream()
+                        .filter(EvalResult::isCorrect)
+                        .sorted(Comparator.comparingDouble(EvalResult::getConfidence))
+                        .map(r -> r.getIntent() + "/"+r.getResult()+", " + r.getConfidence() + ", " + r.getText())
+                        .findFirst().orElse(null));
+
+        System.err.println("Errors!");
+        results.stream().filter(r -> !r.isCorrect())
+                .sorted(Comparator.comparing(EvalResult::getIntent))
+                .forEach(r -> System.err.println("-- " + r.getIntent() + " <-> "
+                        + r.getResult() + ", " + r.confidence + ", " + r.getText()));
+
+
     }
 
     static List<String> readSentences(String examples) {
@@ -132,5 +153,14 @@ public class RasaClientTest {
     @Data
     static class ParseRequestBody {
         final String text;
+    }
+
+    @Data
+    static class EvalResult {
+        String text;
+        boolean correct;
+        double confidence;
+        String intent;
+        String result;
     }
 }
