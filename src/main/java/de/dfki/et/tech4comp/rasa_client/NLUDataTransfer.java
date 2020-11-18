@@ -51,8 +51,7 @@ public class NLUDataTransfer {
                 continue;
             }
             switch (line.charAt(0)) {
-                case '#':
-
+                case '#' -> {
                     int pos = line.indexOf(intentKey);
                     if (pos >= 0) {
                         if (!intentList.isEmpty()) {
@@ -63,12 +62,9 @@ public class NLUDataTransfer {
                         examples.clear();
                         intentList.add(intent);
                     }
-                    break;
-                case '-':
-                    examples.add(line);
-                    break;
-                default:
-                    System.err.println("Unkown line:" + line);
+                }
+                case '-' -> examples.add(line);
+                default -> System.err.println("Unkown line:" + line);
             }
         }
         if (!intentList.isEmpty()) {
