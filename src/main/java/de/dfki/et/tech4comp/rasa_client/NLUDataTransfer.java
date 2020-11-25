@@ -1,5 +1,7 @@
 package de.dfki.et.tech4comp.rasa_client;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -28,7 +30,6 @@ public class NLUDataTransfer {
 
     private static void transform(@NonNull final File input, @NonNull final File output) throws IOException {
         NLUData2 nluData = transform(input);
-        ObjectMapper mapper = getYamlMapper();
         File dir = output.getParentFile();
         if (!dir.exists()) {
             System.out.println("Directory " + dir.getAbsolutePath() + " does not exist! will be created");
@@ -110,6 +111,7 @@ public class NLUDataTransfer {
     static class Intent {
         String intent;
         String examples;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         String synonym;
     }
 }
