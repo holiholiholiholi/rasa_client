@@ -101,8 +101,8 @@ public class MessageSelector {
                                           @NonNull final Map<String, Conversation> conversationMap,
                                           XSSFFont messageFont, XSSFFont historyFont) {
         XSSFRichTextString textString = new XSSFRichTextString();
+        Conversation c = conversationMap.get(result.getConversationId());
         if (result.getMessageIndex() >= 2) {
-            Conversation c = conversationMap.get(result.getConversationId());
             if (null != c) {
                 Conversation.Message m1 = c.getMessages().get(result.getMessageIndex() - 2);
                 textString.append(getIdString(m1) + "\t" + getHistoryString(m1.getText()) + "\n", historyFont);
@@ -111,7 +111,13 @@ public class MessageSelector {
             }
         }
         textString.append("S:\t", historyFont);
-        textString.append(result.getText().trim() + "\n", messageFont);
+        textString.append(result.getText().trim()+"\n" , messageFont);
+        if(null != c) {
+            if (result.getMessageIndex() < c.getMessages().size()-1){
+                Conversation.Message next = c.getMessages().get(result.getMessageIndex()+1);
+                textString.append(getIdString(next) + "\t" + getHistoryString(next.getText()), historyFont);
+            }
+        }
         return textString;
     }
 
