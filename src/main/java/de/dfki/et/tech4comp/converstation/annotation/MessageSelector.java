@@ -6,10 +6,9 @@ import de.dfki.et.tech4comp.converstation.Conversation;
 import de.dfki.util.JsonUtils;
 import lombok.NonNull;
 import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.RichTextString;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -67,17 +66,30 @@ public class MessageSelector {
             XSSFCellStyle dcellStyle = workbook.createCellStyle();
             dcellStyle.setDataFormat(
                     workbook.getCreationHelper().createDataFormat().getFormat("0.00"));
+
+
             XSSFCellStyle textCellStyle = workbook.createCellStyle();
             textCellStyle.setWrapText(true);
 
+            XSSFColor rowBgColor = new XSSFColor(new java.awt.Color(243, 243, 243), new DefaultIndexedColorMap());
+
+            XSSFCellStyle rowStyle = workbook.createCellStyle();
+            rowStyle.setFillForegroundColor(rowBgColor);
+            rowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            rowStyle.setBorderTop(BorderStyle.THIN);
+            rowStyle.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            rowStyle.setBorderRight(BorderStyle.THIN);
+            rowStyle.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
 
             XSSFFont messageFont = workbook.createFont();
 //            messageFont.setBold(true);
             messageFont.setColor(HSSFColor.HSSFColorPredefined.BLUE.getIndex());
             XSSFFont historyFont = workbook.createFont();
-            historyFont.setColor(HSSFColor.HSSFColorPredefined.GREY_40_PERCENT.getIndex());
+            historyFont.setColor(HSSFColor.HSSFColorPredefined.GREY_50_PERCENT.getIndex());
 
             int rowNum = 1;
+            int indentIndex = 0;
+            String lastIndent = null;
             for (CIntentRecognizer.CNLUResult result : selectedResults) {
                 Row row = sheet.createRow(rowNum++);
                 int colNum = 0;
@@ -90,6 +102,27 @@ public class MessageSelector {
                 Cell textCell = row.createCell(colNum++);
                 textCell.setCellValue(getText(result, conversationMap, messageFont, historyFont));
                 textCell.setCellStyle(textCellStyle);
+                if (!result.getIntent().equals(lastIndent)) {
+                    lastIndent = result.getIntent();
+                    indentIndex++;
+                }
+                if (indentIndex % 2 == 0) {
+                    for (int i = 0; i < colNum; i++) {
+                        Cell c = row.getCell(i);
+
+                        XSSFCellStyle newCellStyle = workbook.createCellStyle();
+                        newCellStyle.cloneStyleFrom(c.getCellStyle());
+                        newCellStyle.setFillForegroundColor(rowBgColor);
+                        newCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        newCellStyle.setBorderTop(BorderStyle.THIN);
+                        newCellStyle.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                        newCellStyle.setBorderRight(BorderStyle.THIN);
+                        newCellStyle.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                        c.setCellStyle(newCellStyle);
+
+                    }
+                    row.setRowStyle(rowStyle);
+                }
             }
             sheet.autoSizeColumn(3);
             sheet.autoSizeColumn(4);
@@ -111,10 +144,10 @@ public class MessageSelector {
             }
         }
         textString.append("S:\t", historyFont);
-        textString.append(result.getText().trim()+"\n" , messageFont);
-        if(null != c) {
-            if (result.getMessageIndex() < c.getMessages().size()-1){
-                Conversation.Message next = c.getMessages().get(result.getMessageIndex()+1);
+        textString.append(result.getText().trim() + "\n", messageFont);
+        if (null != c) {
+            if (result.getMessageIndex() < c.getMessages().size() - 1) {
+                Conversation.Message next = c.getMessages().get(result.getMessageIndex() + 1);
                 textString.append(getIdString(next) + "\t" + getHistoryString(next.getText()), historyFont);
             }
         }
