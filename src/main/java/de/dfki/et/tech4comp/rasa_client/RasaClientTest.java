@@ -26,7 +26,9 @@ public class RasaClientTest {
 //        String path = "target/nlu.yml";
 //        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.0.6/server/data/test_data.yml";
 //        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.0.6/server/data/training_data.yml";
-        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_de_default.yml";
+//        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_de_default.yml";
+//        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_big.yml";
+        String path = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_test2/test_data.yml";
         File nluFile = new File(path);
         ObjectMapper mapper = NLUDataTransfer.getYamlMapper();
         NLUDataTransfer.NLUData2 nluData = mapper.readValue(nluFile, NLUDataTransfer.NLUData2.class);
@@ -141,7 +143,7 @@ public class RasaClientTest {
     }
 
     @Data
-    static class NLUResult {
+    public static class NLUResult {
         String intent;
         double confidence;
 

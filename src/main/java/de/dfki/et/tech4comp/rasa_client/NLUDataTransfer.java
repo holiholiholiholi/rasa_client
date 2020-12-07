@@ -20,6 +20,8 @@ import java.util.List;
 
 
 public class NLUDataTransfer {
+    static int min_examples = 3; // set -1 to turn off the filter
+
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
             System.err.println("Usage intentsFileV1 output.yml");
@@ -71,6 +73,12 @@ public class NLUDataTransfer {
         if (!intentList.isEmpty()) {
             intentList.get(intentList.size() - 1).examples = String.join("\n", examples);
         }
+        if(min_examples>0){
+            int orgsize = intentList.size();
+            intentList.removeIf( i -> i.getExampleSize()<min_examples);
+            System.out.println("Read intents: "+ orgsize);
+            System.out.println("Removed intents with <"+min_examples+" examples: "+ (orgsize-intentList.size()));
+        }
         return new NLUData2(intentList);
     }
 
@@ -113,5 +121,14 @@ public class NLUDataTransfer {
         String examples;
         @JsonInclude(JsonInclude.Include.NON_NULL)
         String synonym;
+
+        @JsonIgnore
+        public int getExampleSize(){
+            if(StringUtils.isEmpty(examples)){
+                return 0;
+            }
+
+            return examples.split("\n+").length;
+        }
     }
 }
