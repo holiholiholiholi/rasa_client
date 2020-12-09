@@ -17,8 +17,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MessageSelector {
-    static int number = 100;
-    static int number4Intent = 10;
+//    static int number = 100;
+//    static int number4Intent = 10;
+    static int minNumber4Intent = 3;
+    static double percent4Intent = 0.1;
+
 
     public static void main(String args[]) throws Exception {
         List<Conversation> conversations = JsonUtils.readList(new File("target/conversations.jsonl"), Conversation.class);
@@ -27,27 +30,51 @@ public class MessageSelector {
         List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_results_wo_duplicates.jsonl"), CIntentRecognizer.CNLUResult.class);
         System.out.println("Read cnlu results: " + cnluResults.size());
 
+        //filter the lang texts
+        cnluResults.removeIf( c -> c.getText().split(" +").length>30);
+        System.out.println("Removed lang texts! Remained: " + cnluResults.size());
+
 //        Collections.shuffle(cnluResults);
 //        List<CIntentRecognizer.CNLUResult> selectedResults = cnluResults.subList(0, number);
 
         List<CIntentRecognizer.CNLUResult> selectedResults = select4Intent(cnluResults);
         saveCNLUResult(selectedResults, conversationMap, new File("target/conversations_selected.xlsx"));
 
+        Set<String> ids = selectedResults.stream().map(MessageSelector::getId).collect(Collectors.toSet());
+        List<CIntentRecognizer.CNLUResult> selectedLowConfResults = cnluResults.stream()
+                .filter(r -> !ids.contains(getId(r)) && r.getConfidence() <= 0.5 && r.getConfidence() > 0.4)
+                .sorted(Comparator.comparing(CIntentRecognizer.CNLUResult::getIntent))
+                .collect(Collectors.toList());
+        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_selected_lowConfidence.xlsx"));
+
+
     }
 
-    static List<CIntentRecognizer.CNLUResult> select(@NonNull final Collection<CIntentRecognizer.CNLUResult> results) {
-        List<CIntentRecognizer.CNLUResult> cnluResults = new ArrayList<>(results);
-        Collections.shuffle(cnluResults);
-        return cnluResults.subList(0, number);
+    static String getId(@NonNull final  CIntentRecognizer.CNLUResult result){
+        return result.getConversationId()+"_"+result.getMessageIndex();
     }
+
+//    static List<CIntentRecognizer.CNLUResult> select(@NonNull final Collection<CIntentRecognizer.CNLUResult> results) {
+//        List<CIntentRecognizer.CNLUResult> cnluResults = new ArrayList<>(results);
+//        Collections.shuffle(cnluResults);
+//        return cnluResults.subList(0, number);
+//    }
 
     static List<CIntentRecognizer.CNLUResult> select4Intent(@NonNull final Collection<CIntentRecognizer.CNLUResult> results) {
         Set<String> intents = results.stream().map(CIntentRecognizer.CNLUResult::getIntent).collect(Collectors.toSet());
         List<CIntentRecognizer.CNLUResult> selected = new ArrayList<>();
         for (String intent : intents) {
             List<CIntentRecognizer.CNLUResult> list = results.stream().filter(c -> intent.equals(c.getIntent())).collect(Collectors.toList());
-            Collections.shuffle(list);
-            selected.addAll(list.subList(0, number4Intent));
+            int added=0;
+            if(list.size()<= minNumber4Intent){
+                selected.addAll(list);
+                added = list.size();
+            }else {
+                Collections.shuffle(list);
+                added = Math.min(Math.max(minNumber4Intent, (int) Math.ceil(list.size() * percent4Intent)), list.size());
+                selected.addAll(list.subList(0, added));
+            }
+            System.out.println("Added examples for intent-"+intent+": "+added);
         }
         return selected;
     }

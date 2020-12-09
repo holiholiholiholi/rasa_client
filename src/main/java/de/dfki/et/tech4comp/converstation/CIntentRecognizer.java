@@ -4,22 +4,29 @@ import de.dfki.et.tech4comp.rasa_client.RasaClientTest;
 import de.dfki.util.JsonUtils;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xddf.usermodel.HasShapeProperties;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CIntentRecognizer {
     public static void main(String args[]) throws Exception {
         File cFile = new File("target/conversations.jsonl");
         List<Conversation> conversations = JsonUtils.readList(cFile, Conversation.class);
+        Set<String> ignoredText = new HashSet<>();
         System.out.println("Read conversations: " + conversations.size());
         List<CNLUResult> results = new ArrayList<>();
-        int userPoster = 0, noTextPoster = 0, botText = 0;
+        int userPoster = 0, noTextPoster = 0, botText = 0, langText = 0;
         int cCounter = 0;
         for (Conversation c : conversations) {
             cCounter++;
+            String lastIntent = null;
             for (int i = 0; i < c.messages.size(); i++) {
                 Conversation.Message p = c.messages.get(i);
 //                if(p.userId.equalsIgnoreCase(ChatLogReader.BOT_HASH)){
@@ -28,10 +35,22 @@ public class CIntentRecognizer {
                     continue;
                 }
                 userPoster++;
-                if (StringUtils.isBlank(p.text) || isNumber(p.text) || toIgnore(p.text)) {
+                if (StringUtils.isBlank(p.text)) {
                     noTextPoster++;
                     continue;
                 }
+
+                if (isNumber(p.text) || toIgnore(p.text) || toIgnore2(p.text, lastIntent)) {
+                    noTextPoster++;
+//                    System.out.println("Ignored(Task Number): "+ p.text);
+                    ignoredText.add(p.text.trim());
+                    continue;
+                }
+                if(p.text.trim().split(" +").length>=50){
+                    langText++;
+                    continue;
+                }
+
                 RasaClientTest.NLUResult result = RasaClientTest.parse(p.text);
                 CNLUResult cnluResult = new CNLUResult();
                 cnluResult.confidence = result.getConfidence();
@@ -40,17 +59,22 @@ public class CIntentRecognizer {
                 cnluResult.messageIndex = i;
                 cnluResult.text = p.text;
                 results.add(cnluResult);
+
+                lastIntent = result.getIntent();
             }
             if (cCounter % 50 == 0) {
                 System.out.println("Parsed conversations ..." + cCounter);
 //                break;
             }
         }
-        System.out.println("Bot messages: "+botText);
+        System.out.println("Bot messages: " + botText);
         System.out.println("Read posters: " + userPoster);
-        System.out.println("NO-Text posters: " + noTextPoster);
+        System.out.println("No-Text/Task Number posters: " + noTextPoster);
+        System.out.println("Lang Text posters:"+langText);
         System.out.println("Parsed Posters: " + results.size());
         JsonUtils.writeList(new File("target/conversation_nlu_results.jsonl"), results);
+        FileUtils.writeLines(new File("target/ignoredMessages.txt"),
+                ignoredText.stream().sorted().collect(Collectors.toList()));
     }
 
     private static boolean toIgnore(String text) {
@@ -58,7 +82,7 @@ public class CIntentRecognizer {
         if (string.endsWith(".") || string.endsWith("?") || string.endsWith("!")) {
             string = string.substring(0, string.length() - 1);
         }
-        if (string.startsWith("schreibaufgabe")) {
+        if (string.startsWith("schreibaufgabe") || string.startsWith("text")) {
             int last = string.charAt(string.length() - 1);
             if (last >= 48 && last <= 57) {
 //                System.out.println(text);
@@ -66,6 +90,14 @@ public class CIntentRecognizer {
             }
         }
         return false;
+    }
+
+    private static boolean toIgnore2(@NonNull final String text, final String lastIntent) {
+        if(StringUtils.isEmpty(lastIntent)){
+            return false;
+        }
+        String tmp = text.replaceAll("[^0-9]", "");
+        return lastIntent.contains("showtasks") && StringUtils.isNotEmpty(tmp);
     }
 
     public static boolean isNumber(@NonNull final String text) {
