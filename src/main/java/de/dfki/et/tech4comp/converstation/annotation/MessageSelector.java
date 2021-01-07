@@ -8,7 +8,6 @@ import lombok.NonNull;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
-import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
 
 import java.io.File;
 import java.io.FileOutputStream;
