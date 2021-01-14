@@ -33,7 +33,7 @@ public class AnnotationReader {
             "showtasks",
             "submission",
             "thanks",
-            "tmitocar"}).collect(Collectors.toSet());
+            "tmitocar", "default"}).collect(Collectors.toSet());
 
     public static void main(String args[]) throws Exception {
         String dir = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/annotated_leipzip_20201223";
@@ -41,7 +41,7 @@ public class AnnotationReader {
         for (String f : files) {
             System.out.println("------------" + f + "-----------");
 //            firstStatics(new File(dir, f));
-            checkSuggestion(new File(dir,f));
+            checkSuggestion(new File(dir, f));
             System.out.println("\n\n");
 
         }
@@ -66,13 +66,13 @@ public class AnnotationReader {
                 if (null != eval && !"correct".equalsIgnoreCase(eval)) {
                     String suggestion = getStringContent(row.getCell(intentSuggestionCol));
                     if (null != suggestion && allIntents.contains(suggestion.toLowerCase(Locale.ROOT))) {
-                        intentMap.put(intent,intentMap.getOrDefault(intent,0)+1);
+                        intentMap.put(intent, intentMap.getOrDefault(intent, 0) + 1);
                     }
                 }
             }
         }
         for (String s : intentMap.keySet().stream().sorted().collect(Collectors.toList())) {
-            System.out.println(s + ";"+intentMap.get(s));
+            System.out.println(s + ";" + intentMap.get(s));
         }
     }
 
