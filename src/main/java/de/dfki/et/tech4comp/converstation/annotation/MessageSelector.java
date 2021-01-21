@@ -5,6 +5,7 @@ import de.dfki.et.tech4comp.converstation.ChatLogReader;
 import de.dfki.et.tech4comp.converstation.Conversation;
 import de.dfki.util.JsonUtils;
 import lombok.NonNull;
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
@@ -23,10 +24,11 @@ public class MessageSelector {
 
 
     public static void main(String args[]) throws Exception {
-        List<Conversation> conversations = JsonUtils.readList(new File("target/conversations.jsonl"), Conversation.class);
+        List<Conversation> conversations = JsonUtils.readList(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/conversations.jsonl"), Conversation.class);
         Map<String, Conversation> conversationMap = conversations.stream().collect(Collectors.toMap(Conversation::getId, c -> c));
 
-        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_results_wo_duplicates.jsonl"), CIntentRecognizer.CNLUResult.class);
+//        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_results_wo_duplicates.jsonl"), CIntentRecognizer.CNLUResult.class);
+        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_wodup_singleSentence.jsonl"), CIntentRecognizer.CNLUResult.class);
         System.out.println("Read cnlu results: " + cnluResults.size());
 
         //filter the lang texts
@@ -36,15 +38,21 @@ public class MessageSelector {
 //        Collections.shuffle(cnluResults);
 //        List<CIntentRecognizer.CNLUResult> selectedResults = cnluResults.subList(0, number);
 
-        List<CIntentRecognizer.CNLUResult> selectedResults = select4Intent(cnluResults);
-        saveCNLUResult(selectedResults, conversationMap, new File("target/conversations_selected.xlsx"));
+//        List<CIntentRecognizer.CNLUResult> selectedResults = select4Intent(cnluResults);
+//        saveCNLUResult(selectedResults, conversationMap, new File("target/conversations_selected.xlsx"));
 
-        Set<String> ids = selectedResults.stream().map(MessageSelector::getId).collect(Collectors.toSet());
+//        Set<String> ids = selectedResults.stream().map(MessageSelector::getId).collect(Collectors.toSet());
+
+        Set<String> ids = new HashSet<>(FileUtils.readLines(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/annotated_leipzip_20201223/annotated_ids.txt"),"utf8"));
+        System.out.println("Get annotated ids:"+ids.size());
+
         List<CIntentRecognizer.CNLUResult> selectedLowConfResults = cnluResults.stream()
-                .filter(r -> !ids.contains(getId(r)) && r.getConfidence() <= 0.5 && r.getConfidence() > 0.4)
+//                .filter(r -> !ids.contains(getId(r)) && r.getConfidence() <= 0.5 && r.getConfidence() > 0.4)
+                .filter(r -> !ids.contains(getId(r)) && r.getConfidence()>0.5 && r.getConfidence()<0.8)
+                .filter(r -> !r.getIntent().startsWith("biwi5"))
                 .sorted(Comparator.comparing(CIntentRecognizer.CNLUResult::getIntent))
                 .collect(Collectors.toList());
-        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_selected_lowConfidence.xlsx"));
+        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_selected_lowConfidence2.xlsx"));
 
 
     }
@@ -86,7 +94,7 @@ public class MessageSelector {
 
         try (XSSFWorkbook workbook = new XSSFWorkbook(); FileOutputStream fo = new FileOutputStream(file)) {
             XSSFSheet sheet = workbook.createSheet("massage nlu");
-            List<String> header = List.of("conversation id", "message index", "confidence", "intent", "text", "isCorrect", "intent suggestion");
+            List<String> header = List.of("conversation id", "message index", "confidence", "intent", "text", "isCorrect", "intent suggestion","hasMultiSentence");
             createHeader(workbook, sheet, header);
 
             XSSFCellStyle dcellStyle = workbook.createCellStyle();
@@ -153,6 +161,8 @@ public class MessageSelector {
             sheet.autoSizeColumn(3);
             sheet.autoSizeColumn(4);
             workbook.write(fo);
+
+            System.out.println("exported row "+rowNum);
         }
     }
 

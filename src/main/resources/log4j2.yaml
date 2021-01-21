@@ -1,0 +1,25 @@
+Configuration:
+  status: warn
+  name: YAMLConfigTest
+  appenders:
+    Console:
+      name: STDOUT
+      PatternLayout:
+        Pattern: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%t] [%level] %l  -  %msg%n"
+
+  Loggers:
+    logger:
+      -
+        name: de.dfki.lt.dare.util.io.FileUtils
+        level: debug
+      -
+        name: de.dfki.lt.dare.util.io.brw.AbstractFileBatchReader
+        level: debug
+      -
+        name: de.dfki.lt.dare.util.GraphUtils
+        level: debug
+
+    Root:
+      level: INFO
+      AppenderRef:
+        ref: STDOUT
