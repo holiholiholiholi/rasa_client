@@ -1,12 +1,13 @@
 package de.dfki.et.tech4comp.converstation;
 
-import de.dfki.et.tech4comp.rasa_client.RasaClientTest;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import de.dfki.et.tech4comp.rasa_client.RasaNLUClient;
+import de.dfki.et.tech4comp.rasa_client.RasaNLUResult;
 import de.dfki.util.JsonUtils;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xddf.usermodel.HasShapeProperties;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,9 +22,11 @@ public class CIntentRecognizer {
         List<Conversation> conversations = JsonUtils.readList(cFile, Conversation.class);
         Set<String> ignoredText = new HashSet<>();
         System.out.println("Read conversations: " + conversations.size());
+
         List<CNLUResult> results = new ArrayList<>();
         int userPoster = 0, noTextPoster = 0, botText = 0, langText = 0;
         int cCounter = 0;
+        RasaNLUClient rasaNLUClient = new RasaNLUClient();
         for (Conversation c : conversations) {
             cCounter++;
             String lastIntent = null;
@@ -46,21 +49,17 @@ public class CIntentRecognizer {
                     ignoredText.add(p.text.trim());
                     continue;
                 }
-                if(p.text.trim().split(" +").length>=50){
+                if (p.text.trim().split(" +").length >= 50) {
                     langText++;
                     continue;
                 }
 
-                RasaClientTest.NLUResult result = RasaClientTest.parse(p.text);
-                CNLUResult cnluResult = new CNLUResult();
-                cnluResult.confidence = result.getConfidence();
-                cnluResult.intent = result.getIntent();
+                CNLUResult cnluResult = new CNLUResult(rasaNLUClient.parse(p.text));
                 cnluResult.conversationId = c.id;
                 cnluResult.messageIndex = i;
-                cnluResult.text = p.text;
                 results.add(cnluResult);
 
-                lastIntent = result.getIntent();
+                lastIntent = cnluResult.getIntent();
             }
             if (cCounter % 50 == 0) {
                 System.out.println("Parsed conversations ..." + cCounter);
@@ -70,7 +69,7 @@ public class CIntentRecognizer {
         System.out.println("Bot messages: " + botText);
         System.out.println("Read posters: " + userPoster);
         System.out.println("No-Text/Task Number posters: " + noTextPoster);
-        System.out.println("Lang Text posters:"+langText);
+        System.out.println("Lang Text posters:" + langText);
         System.out.println("Parsed Posters: " + results.size());
         JsonUtils.writeList(new File("target/conversation_nlu_results.jsonl"), results);
         FileUtils.writeLines(new File("target/ignoredMessages.txt"),
@@ -93,7 +92,7 @@ public class CIntentRecognizer {
     }
 
     private static boolean toIgnore2(@NonNull final String text, final String lastIntent) {
-        if(StringUtils.isEmpty(lastIntent)){
+        if (StringUtils.isEmpty(lastIntent)) {
             return false;
         }
         String tmp = text.replaceAll("[^0-9]", "");
@@ -111,12 +110,22 @@ public class CIntentRecognizer {
     }
 
     @Data
-    public static class CNLUResult {
+    public static class CNLUResult extends RasaNLUResult {
         String conversationId;
         int messageIndex;
-        String text;
-        String intent;
-        double confidence;
+
+        public CNLUResult(@JsonProperty("text") final String text,
+                          @JsonProperty("intent") final String intent,
+                          @JsonProperty("confidence") final double confidence) {
+            super(text, intent, confidence);
+        }
+
+        public CNLUResult(final RasaNLUResult r) {
+            this(r.getText(), r.getIntent(), r.getConfidence());
+            this.intentSuggestion = r.getIntentSuggestion();
+            this.correct = r.isCorrect();
+            this.entities.addAll(r.getEntities());
+        }
 
         @Override
         public int hashCode() {

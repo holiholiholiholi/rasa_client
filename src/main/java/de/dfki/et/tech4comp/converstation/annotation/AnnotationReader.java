@@ -40,8 +40,11 @@ public class AnnotationReader {
             "thanks",
             "tmitocar", "default"}).collect(Collectors.toSet());
 
+    static Set<String> biwi5Intents = Set.of("biwi5ichwill", "biwi5zeige");
+
     public static void main(String args[]) throws Exception {
-        String dir = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/annotated_leipzip_20201223";
+//        String dir = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/round1/annotated_leipzip_20201223";
+        String dir = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/round1/annotated_leipzip_20210108";
         String files[] = {"intents_eval_20201210_fertigTA.xlsx", "intents_eval_lowConfidence_20201210_fertigNP.xlsx"};
 
 
@@ -53,12 +56,15 @@ public class AnnotationReader {
                         CIntentRecognizer.CNLUResult::getText));
         System.out.println("Read cnlu results: " + cnluResults.size());
         List<IntentAnnotation> results = new ArrayList<>();
-        for(String f: files){
-            System.out.println("------------" + f + "-----------");
-            results.addAll(readGoldstandard(new File(dir,f),cnluResults,msMessageId));
-        }
-        JsonUtils.writeList(new File("target/goldstandard.jsonl"),results);
-        System.out.println("Get goldstandard intent annotation:"+ results.size());
+
+
+
+//        for(String f: files){
+//            System.out.println("------------" + f + "-----------");
+//            results.addAll(readGoldstandard(new File(dir,f),cnluResults,msMessageId));
+//        }
+//        JsonUtils.writeList(new File("target/goldstandard.jsonl"),results);
+//        System.out.println("Get goldstandard intent annotation:"+ results.size());
 //        for (String f : files) {
 //            System.out.println("------------" + f + "-----------");
 ////            firstStatics(new File(dir, f));

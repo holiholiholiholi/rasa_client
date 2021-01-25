@@ -5,9 +5,7 @@ import lombok.NonNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CNLUResultAnalyser {
@@ -42,10 +40,10 @@ public class CNLUResultAnalyser {
         List<String> intents = cnluResults.stream().map(CIntentRecognizer.CNLUResult::getIntent).distinct().sorted().collect(Collectors.toList());
         intents.forEach(System.out::println);
         for (String intent : intents) {
-            System.out.println(cnluResults.stream().filter(c -> intent.equals(c.intent)).count());
+            System.out.println(cnluResults.stream().filter(c -> intent.equals(c.getIntent())).count());
         }
         for (String intent : intents) {
-            System.out.println(cnluResults.stream().filter(c -> intent.equals(c.intent))
+            System.out.println(cnluResults.stream().filter(c -> intent.equals(c.getIntent()))
                     .mapToDouble(CIntentRecognizer.CNLUResult::getConfidence).average().orElse(0));
         }
 
@@ -61,6 +59,6 @@ public class CNLUResultAnalyser {
     }
 
     private static String getText(@NonNull final CIntentRecognizer.CNLUResult result) {
-        return result.text.trim().toLowerCase();
+        return result.getText().trim().toLowerCase();
     }
 }
