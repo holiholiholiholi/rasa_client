@@ -14,7 +14,8 @@ public class NLUDataMerger {
     public static void main(String args[]) throws Exception {
 
 
-        String intentOriginal = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_de_default.yml";
+//        String intentOriginal = "/Users/lihong/projects/DFKI_ET/tech4comp/rasa_2.1.0/server/data/nlu_de_default.yml";
+        String intentOriginal = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL/intents/rasa2.x/intents+annoround1.yml";
         NLUDataTransfer.NLUData2 nluData = YamlUtils.read(intentOriginal, NLUDataTransfer.NLUData2.class);
 
         System.out.println("Read original nlu:" + nluData.nlu.size());
@@ -23,8 +24,10 @@ public class NLUDataMerger {
 ////            System.out.println(intent.examples);
 //        }
 
+        String fileToAdd = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL" +
+                "/log_2020_10-11/annotation/round2/annotated_leipzip/goldstandard.jsonl";
         List<AnnotationReader.IntentAnnotation> intentAnnotations =
-                JsonUtils.readList(new File("target/goldstandard.jsonl"), AnnotationReader.IntentAnnotation.class);
+                JsonUtils.readList(new File(fileToAdd), AnnotationReader.IntentAnnotation.class);
         Map<String, List<String>> exampleMap = new HashMap<>();
         intentAnnotations.forEach(i -> exampleMap.computeIfAbsent(i.getIntent(), k -> new ArrayList<>()).add(i.getText()));
 

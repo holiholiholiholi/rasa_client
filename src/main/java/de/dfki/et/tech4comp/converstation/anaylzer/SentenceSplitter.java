@@ -20,7 +20,8 @@ public class SentenceSplitter {
     static StanfordCoreNLP pipeline = getPipeline();
 
     public static void main(String args[]) throws Exception {
-        File dir = new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11");
+//        File dir = new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11");
+        File dir = new File("target");
         List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File(dir, "conversation_nlu_results_wo_duplicates.jsonl"), CIntentRecognizer.CNLUResult.class);
         System.out.println("Read cnlu results: " + cnluResults.size());
 

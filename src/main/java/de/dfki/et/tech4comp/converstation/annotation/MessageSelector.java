@@ -24,11 +24,14 @@ public class MessageSelector {
 
 
     public static void main(String args[]) throws Exception {
-        List<Conversation> conversations = JsonUtils.readList(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/conversations.jsonl"), Conversation.class);
+        String conversationFile = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL/log_2020_10-11/conversations.jsonl";
+//        String conversationFile = "target/conversations.jsonl";
+        List<Conversation> conversations = JsonUtils.readList(new File(conversationFile), Conversation.class);
         Map<String, Conversation> conversationMap = conversations.stream().collect(Collectors.toMap(Conversation::getId, c -> c));
 
-//        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_results_wo_duplicates.jsonl"), CIntentRecognizer.CNLUResult.class);
-        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File("target/conversation_nlu_wodup_singleSentence.jsonl"), CIntentRecognizer.CNLUResult.class);
+        String cnluResultFile = "/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL/log_2020_10-11/conversation_nlu_wodup_singleSentence.jsonl";
+//        String cnluResultFile = "target/conversation_nlu_results_wo_duplicates_singleSentence.jsonl";
+        List<CIntentRecognizer.CNLUResult> cnluResults = JsonUtils.readList(new File(cnluResultFile), CIntentRecognizer.CNLUResult.class);
         System.out.println("Read cnlu results: " + cnluResults.size());
 
         //filter the lang texts
@@ -43,17 +46,21 @@ public class MessageSelector {
 
 //        Set<String> ids = selectedResults.stream().map(MessageSelector::getId).collect(Collectors.toSet());
 
-        Set<String> ids = new HashSet<>(FileUtils.readLines(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/annotation/annotated_leipzip_20201223/annotated_ids.txt"),"utf8"));
+        Set<String> ids = new HashSet<>(FileUtils.readLines(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL/log_2020_10-11/annotation/round1/annotated_leipzip_20201223/annotated_ids.txt"),"utf8"));
+        ids.addAll(FileUtils.readLines(new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5_UL/log_2020_10-11/annotation/round2/annotated_leipzip/annotated_ids.txt"),"utf8"));
         System.out.println("Get annotated ids:"+ids.size());
+//        Set<String> ids = Set.of();
 
         List<CIntentRecognizer.CNLUResult> selectedLowConfResults = cnluResults.stream()
 //                .filter(r -> !ids.contains(getId(r)) && r.getConfidence() <= 0.5 && r.getConfidence() > 0.4)
-                .filter(r -> !ids.contains(getId(r)) && r.getConfidence()>0.5 && r.getConfidence()<0.8)
+//                .filter(r -> !ids.contains(getId(r)) && r.getConfidence()>0.5 && r.getConfidence()<0.8)
+//                .filter(r -> !ids.contains(getId(r))  && r.getConfidence()<0.9)
+                .filter(r -> !ids.contains(getId(r)) && r.getConfidence()>=0.99)
                 .filter(r -> !r.getIntent().startsWith("biwi5"))
                 .sorted(Comparator.comparing(CIntentRecognizer.CNLUResult::getIntent))
                 .collect(Collectors.toList());
-        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_selected_lowConfidence2.xlsx"));
-
+//        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_selected_lowConfidence2.xlsx"));
+        saveCNLUResult(selectedLowConfResults, conversationMap, new File("target/conversations_toannotate.xlsx"));
 
     }
 

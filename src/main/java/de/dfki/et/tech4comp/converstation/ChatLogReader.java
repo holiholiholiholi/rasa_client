@@ -19,10 +19,13 @@ import java.util.Set;
  * kannst du mich danach fragen ...
  */
 public class ChatLogReader {
-    public final static Set<String> BOT_HASH = Set.of("5aba89fded6909f14eb1f5de3047bd89","92d53aacd80de523cbaa3c138898b898");
-
+    //UL chatbotbiwi5
+    //public final static Set<String> BOT_HASH = Set.of("5aba89fded6909f14eb1f5de3047bd89","92d53aacd80de523cbaa3c138898b898");
+    //UD bitbot
+    public final static Set<String> BOT_HASH = Set.of("3e9ead5a9e272b7c23b3ee0783f1b381");
     public static void main(String args[]) throws IOException {
-        File dir = new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/chatlog");
+//        File dir = new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/chatbot_biwi5/2020_10-11/chatlog");
+        File dir = new File("/Users/lihong/projects/DFKI_ET/tech4comp/data/TestBed_UD/bitbot/log_202101");
         int fnumber = 0, emptyFiles = 0;
         List<Conversation> conversations = new ArrayList<>();
         for (File f : dir.listFiles(n -> n.getName().endsWith("txt"))) {
@@ -48,8 +51,8 @@ public class ChatLogReader {
         System.out.println("Min posters:" + conversations.stream().mapToInt(c -> c.messages.size()).min().orElse(0));
         System.out.println(" -- " + conversations.stream().sorted(Comparator.comparingInt(Conversation::size)).map(Conversation::getId).findFirst().orElse(null));
         System.out.println("Users: " + conversations.stream().flatMap(c -> c.messages.stream()).map(Conversation.Message::getUserId).distinct().count());
-        System.out.println("Conversation with more than 3 Users: " + conversations.stream().filter( c -> c.messages.stream().map(Conversation.Message::getUserId).distinct().count()>2).count());
-        System.out.println(" -- examples: "+ conversations.stream().filter( c -> c.messages.stream().map(Conversation.Message::getUserId).distinct().count()>2).findFirst().get().id);
+//        System.out.println("Conversation with more than 3 Users: " + conversations.stream().filter( c -> c.messages.stream().map(Conversation.Message::getUserId).distinct().count()>2).count());
+//        System.out.println(" -- examples: "+ conversations.stream().filter( c -> c.messages.stream().map(Conversation.Message::getUserId).distinct().count()>2).findFirst().get().id);
         JsonUtils.writeList(new File("target/conversations.jsonl"), conversations);
 
     }
